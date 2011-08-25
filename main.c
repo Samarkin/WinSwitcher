@@ -1,38 +1,34 @@
-// 8989.cpp : Defines the entry point for the application.
+// main.c : Defines the entry point for the application.
 //
 // Windows Header Files:
 #include <windows.h>
 #include <psapi.h>
 
 // C RunTime Header Files
-//#include <stdlib.h>
-//#include <malloc.h>
-//#include <memory.h>
 #include <tchar.h>
 
 #define MAX_LOADSTRING 100
 #define WINDOW_CLASS_NAME _T("WinSwitcherHiddenWindow")
 
 // Global Variables:
-HINSTANCE	hInst;								// current instance
-
-HWND		hWnd;								// main window handle
+HINSTANCE hInst;		// current instance
+HWND hWnd;		// main window handle
 
 // Forward declarations of functions included in this code module:
-ATOM				MyRegisterClass();
-VOID				InitInstance(int);
-LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
+ATOM MyRegisterClass(VOID);
+VOID InitInstance(VOID);
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+VOID SwitchWindow(VOID);
 
-int main()
+int main(void)
 {
 	HINSTANCE hInst = GetModuleHandle(NULL);
-	int nCmdShow = SW_SHOWNORMAL;
 
 	MSG msg;
 	MyRegisterClass();
 
 	// Perform application initialization:
-	InitInstance (nCmdShow);
+	InitInstance ();
 
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -44,31 +40,51 @@ int main()
 	ExitProcess(msg.wParam);
 }
 
-ATOM MyRegisterClass()
+ATOM MyRegisterClass(VOID)
 {
 	WNDCLASSEX wcex;
+	wcex.cbSize        = sizeof(WNDCLASSEX);
 
-	wcex.cbSize = sizeof(WNDCLASSEX);
-
-	wcex.style			= CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc	= WndProc;
-	wcex.cbClsExtra		= 0;
-	wcex.cbWndExtra		= 0;
-	wcex.hInstance		= hInst;
-	wcex.hIcon			= NULL;
-	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW);
-	wcex.lpszMenuName	= NULL;
-	wcex.lpszClassName	= WINDOW_CLASS_NAME;
-	wcex.hIconSm		= NULL;
+	wcex.style         = 0;
+	wcex.lpfnWndProc   = WndProc;
+	wcex.cbClsExtra    = 0;
+	wcex.cbWndExtra    = 0;
+	wcex.hInstance     = hInst;
+	wcex.hIcon         = NULL;
+	wcex.hCursor       = NULL;
+	wcex.hbrBackground = NULL;
+	wcex.lpszMenuName  = NULL;
+	wcex.lpszClassName = WINDOW_CLASS_NAME;
+	wcex.hIconSm       = NULL;
 
 	return RegisterClassEx(&wcex);
 }
 
 
-VOID InitInstance(int nCmdShow)
+VOID InitInstance(VOID)
 {
 	hWnd = CreateWindowEx(0, WINDOW_CLASS_NAME, _T(""), 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInst, NULL);
+}
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_CREATE:
+		// Alt + tilde
+		RegisterHotKey(hWnd, 1, 1, 192);
+		break;
+	case WM_DESTROY:
+		UnregisterHotKey(hWnd, 1);
+		PostQuitMessage(0);
+		break;
+	case WM_HOTKEY:
+		SwitchWindow();
+		break;
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+	return 0;
 }
 
 // == REAL CODE AFTER THIS LINE ==
@@ -124,6 +140,8 @@ BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 	// if it is active then skip
 	if (hWnd == hCurrentWindow) return TRUE;
 
+	// let's find window with the biggest hWnd (hHighestWindow)
+	//    and the window with the biggest hWnd, but not bigger than current (hHighestRightWindow)
 	if (hWnd > hHighestRightWindow)
 	{
 		if (hWnd < hCurrentWindow)
@@ -134,7 +152,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 	return TRUE;
 }
 
-VOID SwitchWindow()
+VOID SwitchWindow(VOID)
 {
 	HANDLE hCurrentProcess;
 
@@ -152,27 +170,4 @@ VOID SwitchWindow()
 
 	if (!hHighestRightWindow) hHighestRightWindow = hHighestWindow;
 	if (hHighestWindow) SetForegroundWindow(hHighestWindow);
-}
-
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	int wmId, wmEvent;
-
-	switch (message)
-	{
-	case WM_CREATE:
-		// Alt + tilde
-		RegisterHotKey(hWnd, 8989, 1, 192);
-		break;
-	case WM_DESTROY:
-		UnregisterHotKey(hWnd, 8989);
-		PostQuitMessage(0);
-		break;
-	case WM_HOTKEY:
-		SwitchWindow();
-		break;
-	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
-	}
-	return 0;
 }
