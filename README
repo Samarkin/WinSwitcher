@@ -1,0 +1,4 @@
+Allows you to cycle through windows of one application (even if in different processes, like Google Chrome). The idea was stolen from Apple Mac OS X.
+
+For now, it has no interface at all, you just start WinSwitcher.exe and it's working. To stop it you must use Task Manager.
+To switch windows press Alt+`
